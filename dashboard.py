@@ -23,7 +23,7 @@ class Dashboard:
         
     def create_metric_widgets(self):
         self.title_label = tk.Label(self.window, 
-                                    text="PC Monitoring Dashboard", 
+                                    text="Monitoring Dashboard", 
                                     font=("Segoe UI", 18, "bold"),
                                     bg="#20242c",
                                     fg='white')
@@ -31,28 +31,30 @@ class Dashboard:
 
         # container for the metric sections
         self.metrics_frame = tk.Frame(self.window, bg="#20242c")
-        self.metrics_frame.pack(fill='x', padyx=10, pady=5)
+        self.metrics_frame.pack(fill='x', padx=10, pady=5)
 
         # create metric cards 
         self.display_cpu_frame()
         self.display_memory_frame()
         self.display_disk_frame()
         self.display_bytes_frame()
+        self.display_network_frame()
 
         # arrange cards in a row
         # only frames that were created with create_frame() go in the grid 
         # the BYTES laybel lives inside network_stats_frame, so the frame is what gets gridded, not the labels
-        self.cpu_frame.grid(row=0, column=0, padx=8, sticky="nsew")
-        self.memory_frame.grid(row=0, column=1, padx=8, sticky="nsew")
-        self.disk_frame.grid(row=0, column=2, padx=8, sticky="nsew")
-        self.network_stats_frame(row=1, column=0, padx=8, sticky="nsew")
-        self.network_speed_frame(row=1, column=1, padx=8, sticky="nsew")
+        self.cpu_frame.grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
+        self.memory_frame.grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
+        self.disk_frame.grid(row=0, column=2, padx=8, pady=8, sticky="nsew")
+        self.network_stats_frame.grid(row=1, column=0, padx=8, pady=8, sticky="nsew")
+        self.network_speed_frame.grid(row=1, column=1, padx=8, pady=8, sticky="nsew")
 
         # allow cards to share available width 
         # uniform makes every column the same width no matter how long its text is 
-        for col in range(4):
+        for col in range(3): # 3 columns 
             self.metrics_frame.grid_columnconfigure(col, weight=1, uniform="cards")
-        self.metrics_frame.grid_rowconfigure(0, weight=1) # lets sticky='nsew' make the cards the same height 
+        for row in range(2): # lets stciky='new' make the cards the same height
+            self.metrics_frame.grid_rowconfigure(row, weight=1, uniform="rows") 
 
         # create metrics refresh button
         self.metrics_refresh_button_frame = tk.Frame(self.window, bg="#20242c")
@@ -174,11 +176,15 @@ class Dashboard:
         self.network_speed_stats = self.network_monitor.get_network_speed()
 
         self.upload_mbps = tk.Label(self.network_speed_frame,
-                                    text=f"Upload (mbps): {self.network_speed_stats['upload_mbps']}")
+                                    text=f"Upload (mbps): {self.network_speed_stats['upload_mbps']:.2f}",
+                                    bg="#303744",
+                                    fg="white")
         self.upload_mbps.pack()
 
         self.download_mbps = tk.Label(self.network_speed_frame,
-                                      text=f"Download (mbps): {self.network_speed_stats['download_mbps']}")
+                                      text=f"Download (mbps): {self.network_speed_stats['download_mbps']:.2f}",
+                                      bg="#303744",
+                                      fg="white")
         self.download_mbps.pack()
 
 # -----------------------------------------------------------------------------------
@@ -220,10 +226,10 @@ class Dashboard:
             self.network_bytes_sent.config(text=f"Bytes Sent: {self.network_stats['bytes_sent'] / 1024 ** 3:.2f} GB")
 
             # update upload speed
-            self.upload_mbps.config(text=f"Upload (mbps): {self.network_speed_stats['upload_mbps']}")
+            self.upload_mbps.config(text=f"Upload (mbps): {self.network_speed_stats['upload_mbps']:.2f}")
 
             # update download speed
-            self.download_mbps.config(text=f"Download (mbps): {self.network_speed_stats['download_mbps']}")
+            self.download_mbps.config(text=f"Download (mbps): {self.network_speed_stats['download_mbps']:.2f}")
 
             # clear any earlier error message
             self.metrics_status_label.config(text="Monitoring System Resources...")
@@ -233,7 +239,7 @@ class Dashboard:
 
         finally:
             # schedule another update roughly every 4.5 seconds
-            self.window.after(4500, self.update_system_monitor)
+            self.window.after(4500, self.update_monitors)
 
     def run(self):
         self.window.mainloop()
