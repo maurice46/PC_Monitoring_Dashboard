@@ -9,6 +9,8 @@ class Dashboard:
     def __init__(self):
         self.system_monitor = SystemMonitor()
         self.network_monitor = NetworkMonitor()
+        self.process_manager = ProcessManager()
+        # self.alert_manager = AlertManager(monitor=self.system_monitor)
 
         # id of the pending window.after() call (so Refresh can't stack timers)
         self.update_job = None
@@ -50,12 +52,13 @@ class Dashboard:
         self.network_stats_frame.grid(row=1, column=0, padx=8, pady=8, sticky="nsew")
         self.network_speed_frame.grid(row=1, column=1, padx=8, pady=8, sticky="nsew")
         self.metrics_refresh_button_frame.grid(row=1, column=2, padx=8, pady=8, sticky="nsew")
+        self.
 
         # allow cards to share available width 
         # uniform makes every column the same width no matter how long its text is 
         for col in range(3): # 3 columns 
             self.metrics_frame.grid_columnconfigure(col, weight=1, uniform="cards")
-        for row in range(2): # lets stciky='new' make the cards the same height
+        for row in range(3): # lets stciky='new' make the cards the same height
             self.metrics_frame.grid_rowconfigure(row, weight=1, uniform="rows") 
 
     def display_button_frame(self):
@@ -193,7 +196,14 @@ class Dashboard:
 # ------------------------------ process manager ---------------------------------
     def display_process_frame(self):
         self.process_frame = self.create_frame("PROCESS")
-        
+
+        self.process_information = self.process_manager.get_running_processes()
+
+        for process in self.process_information:
+            tk.Label(self.process_frame,
+                     text=f"Process {process['pid']}: {process['name']} | \
+                     Memory Usage (%): {process['memory_percent']} | Status: \
+                     {process['status']} | Created At: {process['create_time']}").pack()
 
 
 # -----------------------------------------------------------------------------------

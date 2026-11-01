@@ -10,7 +10,7 @@ class ProcessManager:
     def __init__(self): 
         self.stored_processes = {}
         self.mb = 1024 ** 2
-        self.cpu_count = psutil.cpu_count() or 0.0
+        self.cpu_count = psutil.cpu_count() or 1
 
     def get_running_processes(self): # get process information (attributes)
         processes = {}
