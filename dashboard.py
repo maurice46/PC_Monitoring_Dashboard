@@ -5,7 +5,7 @@ from process_manager import ProcessManager
 from alert_manager import AlertManager
 
 class Dashboard:
-# ------------------------------------ Setup --------------------------------------
+# ------------------------------------ setup --------------------------------------
     def __init__(self):
         self.system_monitor = SystemMonitor()
         self.network_monitor = NetworkMonitor()
@@ -84,7 +84,7 @@ class Dashboard:
                  fg='white').pack()
         return frame
 
-# ------------------------------ System Monitoring ---------------------------------
+# ------------------------------ system monitoring ---------------------------------
 
     def display_cpu_frame(self): 
         self.cpu_frame = self.create_frame("CPU")
@@ -149,7 +149,7 @@ class Dashboard:
                                      fg="white")
         self.disk_percent.pack()
 
-# ------------------------------ Network Monitoring ---------------------------------
+# ------------------------------ network monitoring ---------------------------------
 
     def display_bytes_frame(self):
         self.network_stats_frame = self.create_frame("BYTES")
