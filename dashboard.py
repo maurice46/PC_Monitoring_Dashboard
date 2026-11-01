@@ -16,7 +16,7 @@ class Dashboard:
         self.window.config(bg="#20242c")
 
         self.create_metric_widgets()
-        # self.update_monitors()
+        self.update_monitors()
         
     def create_metric_widgets(self):
         self.title_label = tk.Label(self.window, 
@@ -35,6 +35,7 @@ class Dashboard:
         self.display_memory_frame()
         self.display_disk_frame()
         self.display_bytes_frame()
+        self.display_network_frame()
 
         # arrange cards in a row
         self.cpu_frame.grid(row=0, column=0, padx=8, sticky="nsew")
@@ -157,7 +158,17 @@ class Dashboard:
         self.network_bytes_sent.pack()
 
     def display_network_frame(self):
-        pass
+        self.network_speed_frame = self.create_frame("SPEED")
+
+        self.network_speed_stats = self.network_monitor.get_network_speed()
+
+        self.upload_mbps = tk.Label(self.network_speed_frame,
+                                    text=f"Upload (mbps): {self.network_speed_stats['upload_mbps']}")
+        self.upload_mbps.pack()
+
+        self.download_mbps = tk.Label(self.network_speed_frame,
+                                      text=f"Download (mbps): {self.network_speed_stats['download_mbps']}")
+        self.download_mbps.pack()
 
 # -----------------------------------------------------------------------------------
 
