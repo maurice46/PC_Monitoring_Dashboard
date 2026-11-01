@@ -193,7 +193,13 @@ class Dashboard:
             self.disk_percent.config(text=f"Usage: {self.disk_usage['percent']:.1f}%")
 
             # network monitoring stuff
-            
+            self.network_speed_stats = self.network_monitor.get_network_speed()
+
+            # update upload speed
+            self.upload_mbps.config(text=f"Upload (mbps): {self.network_speed_stats['upload_mbps']}")
+
+            # update download speed
+            self.download_mbps.config(text=f"Download (mbps): {self.network_speed_stats['download_mbps']}")
 
         except Exception as error:
             self.status_label.config(text=f"Monitoring Error: {error}")
