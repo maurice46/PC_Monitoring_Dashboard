@@ -10,6 +10,9 @@ class Dashboard:
         self.system_monitor = SystemMonitor()
         self.network_monitor = NetworkMonitor()
 
+        # id of the pending window.after() call (so Refresh can't stack timers)
+        self.update_job = None
+
         self.window = tk.Tk()
         self.window.title("PC Monitoring Dashboard")
         self.window.geometry("1000x700")
@@ -24,33 +27,36 @@ class Dashboard:
                                     font=("Segoe UI", 18, "bold"),
                                     bg="#20242c",
                                     fg='white')
-        self.title_label.pack()
+        self.title_label.pack(pady=(10,5))
 
         # container for the metric sections
         self.metrics_frame = tk.Frame(self.window, bg="#20242c")
-        self.metrics_frame.pack(fill='x')
+        self.metrics_frame.pack(fill='x', padyx=10, pady=5)
 
         # create metric cards 
         self.display_cpu_frame()
         self.display_memory_frame()
         self.display_disk_frame()
         self.display_bytes_frame()
-        self.display_network_frame()
 
         # arrange cards in a row
+        # only frames that were created with create_frame() go in the grid 
+        # the BYTES laybel lives inside network_stats_frame, so the frame is what gets gridded, not the labels
         self.cpu_frame.grid(row=0, column=0, padx=8, sticky="nsew")
         self.memory_frame.grid(row=0, column=1, padx=8, sticky="nsew")
         self.disk_frame.grid(row=0, column=2, padx=8, sticky="nsew")
-        self.network_bytes_sent.grid(row=0, column=3, padx=8, sticky="nsew")
-        self.network_bytes_received.grid(row=0, column=4, padx=8, sticky="nsew")
+        self.network_stats_frame(row=1, column=0, padx=8, sticky="nsew")
+        self.network_speed_frame(row=1, column=1, padx=8, sticky="nsew")
 
         # allow cards to share available width 
-        for col in range(5):
-            self.metrics_frame.grid_columnconfigure(col, weight=1)
+        # uniform makes every column the same width no matter how long its text is 
+        for col in range(4):
+            self.metrics_frame.grid_columnconfigure(col, weight=1, uniform="cards")
+        self.metrics_frame.grid_rowconfigure(0, weight=1) # lets sticky='nsew' make the cards the same height 
 
         # create metrics refresh button
         self.metrics_refresh_button_frame = tk.Frame(self.window, bg="#20242c")
-        self.metrics_refresh_button_frame.pack()
+        self.metrics_refresh_button_frame.pack(pady=10)
         self.metrics_refresh_button = tk.Button(self.metrics_refresh_button_frame,
                                                 text="Refresh",
                                                 font=("Segoe UI", 10, "bold"),
@@ -58,7 +64,8 @@ class Dashboard:
                                                 fg="white",
                                                 activebackground="#2563eb",
                                                 activeforeground="white",
-                                                relief="flat",)
+                                                relief="flat",
+                                                command=self.update_monitors) # does the updating 
         self.metrics_refresh_button.pack()
        
         self.metrics_status_label = tk.Label(self.window,
@@ -126,7 +133,7 @@ class Dashboard:
 
         self.disk_used = tk.Label(self.disk_frame, 
                                   text=f"Used: {self.disk_usage['used']:.2f} GB",
-                                  bg="#30405C",
+                                  bg="#303744",
                                   fg="white")
         self.disk_used.pack()
 
@@ -134,7 +141,7 @@ class Dashboard:
                                   text=f"Free: {self.disk_usage['free']:.2f} GB",
                                   bg="#303744",
                                   fg="white")
-        self.disk_free.pack(pady=3)
+        self.disk_free.pack()
 
         self.disk_percent = tk.Label(self.disk_frame, 
                                      text=f"Usage: {self.disk_usage['percent']:.1f}%",
@@ -150,11 +157,15 @@ class Dashboard:
         self.network_stats = self.network_monitor.get_network_stats()
 
         self.network_bytes_received = tk.Label(self.network_stats_frame,
-                                               text=f"Bytes Received: {self.network_stats['bytes_received'] / 1024 ** 3} GB")
+                                               text=f"Bytes Received: {self.network_stats['bytes_received'] / 1024 ** 3:.2f} GB",
+                                               bg="#303744",
+                                               fg="white")
         self.network_bytes_received.pack()
 
         self.network_bytes_sent = tk.Label(self.network_stats_frame,
-                                           text=f"Bytes Sent: {self.network_stats['bytes_sent'] / 1024 ** 3} GB")
+                                           text=f"Bytes Sent: {self.network_stats['bytes_sent'] / 1024 ** 3:.2f} GB",
+                                           bg="#303744",
+                                           fg="white")
         self.network_bytes_sent.pack()
 
     def display_network_frame(self):
@@ -173,6 +184,12 @@ class Dashboard:
 # -----------------------------------------------------------------------------------
 
     def update_monitors(self):
+        # cancel the timer that is already waiting, so clicking Refresh restarts the 4.5s
+        # countdown instead of starting a second, overlapping update loop
+        if self.update_job is not None:
+            self.window.after_cancel(self.update_job)
+            self.update_job = None
+
         try:
             # system monitoring stuff 
             self.cpu_usage = self.system_monitor.get_cpu_usage(interval=None)
@@ -193,13 +210,23 @@ class Dashboard:
             self.disk_percent.config(text=f"Usage: {self.disk_usage['percent']:.1f}%")
 
             # network monitoring stuff
+            self.network_stats = self.network_monitor.get_network_stats()
             self.network_speed_stats = self.network_monitor.get_network_speed()
+
+            # update bytes received
+            self.network_bytes_received.config(text=f"Bytes Received: {self.network_stats['bytes_received'] / 1024 ** 3:.2f} GB")
+
+            # update bytes sent 
+            self.network_bytes_sent.config(text=f"Bytes Sent: {self.network_stats['bytes_sent'] / 1024 ** 3:.2f} GB")
 
             # update upload speed
             self.upload_mbps.config(text=f"Upload (mbps): {self.network_speed_stats['upload_mbps']}")
 
             # update download speed
             self.download_mbps.config(text=f"Download (mbps): {self.network_speed_stats['download_mbps']}")
+
+            # clear any earlier error message
+            self.metrics_status_label.config(text="Monitoring System Resources...")
 
         except Exception as error:
             self.status_label.config(text=f"Monitoring Error: {error}")
