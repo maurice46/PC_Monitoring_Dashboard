@@ -199,7 +199,7 @@ class Dashboard:
 
         self.process_information = self.process_manager.get_running_processes()
 
-        for process in self.process_information:
+        for pid, process in self.process_information.items():
             tk.Label(self.process_frame,
                      text=f"Process {process['pid']}: {process['name']} | \
                      Memory Usage (%): {process['memory_percent']} | Status: \

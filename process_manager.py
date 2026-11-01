@@ -21,10 +21,12 @@ class ProcessManager:
                 info = process.info
                 pid = info['pid']
                 memory_info = info['memory_info']
-                # per-process CPU is relative to one core; divide by the core
-                # count so the value matches Task Manager (max 100%)
-                cpu_percent = (info['cpu_percent'] or 0.0) / self.cpu_count
+
+                # normalize cpu usage to a max of approxamialtey 100^%
+                cpu_percent = ((info['cpu_percent'] or 0.0) / self.cpu_count)
+
                 memory_rss = (memory_info.rss if memory_info is not None else 0)
+
                 processes[pid] = {
                     "pid": pid,
                     "name": info['name'] or "Unknown",
@@ -34,8 +36,10 @@ class ProcessManager:
                     "memory_percent": info['memory_percent'] or 0.0,
                     "status": info['status'] or "Unknown",
                     "username": info['username'] or "Unknown",
-                    "create_time": info['create_time']
+                    "create_time": info['create_time'],
+                    "exe": info["exe"] or "Unavailable"
                 }
+
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 # the process may exit or deny access during collection
                 continue
@@ -47,7 +51,7 @@ class ProcessManager:
         processes = (self.stored_processes if processes is None else processes)
         return sorted(
             processes.items(),
-            key=lambda process: process[1]['cpu_percent'] or 0,
+            key=lambda item: item[1]['cpu_percent'],
             reverse=True
         )
     
@@ -55,7 +59,7 @@ class ProcessManager:
         processes = (self.stored_processes if processes is None else processes)
         return sorted(
             processes.items(),
-            key=lambda process: process[1]['memory_percent'] or 0,
+            key=lambda item: item[1]['memory_percent'],
             reverse=True
         )
     
@@ -63,12 +67,17 @@ class ProcessManager:
         processes = (self.stored_processes if processes is None else processes)
         return sorted(
             processes.items(),
-            key=lambda process: process[1]['name'].casefold()
+            key=lambda item: item[1]['name'].casefold()
         )
     
     def search_processes(self, query, processes=None):
         processes = (self.stored_processes if processes is None else processes)
+
         query = str(query).strip().casefold()
+
+        if not query:
+            return dict(processes)
+
         return {
             pid: details 
             for pid, details in processes.items() 
@@ -76,6 +85,11 @@ class ProcessManager:
         }
     
     def get_process_details(self, process_id): # retrieve details for a specific PID
+        try:
+            process_id = int(process_id)
+        except (TypeError, ValueError):
+            return None
+        
         return self.stored_processes.get(process_id)
     
     def terminate_process(self, process_id, timeout=3):
@@ -83,25 +97,41 @@ class ProcessManager:
             process_id = int(process_id)
         except (TypeError, ValueError):
             return False
+        
         # never terminate the dashboard itself or critical system PIDs
         if (process_id <= 0 or process_id == os.getpid() or process_id in self.PROTECTED_PIDS):
             return False
+
+        # verify the process still matches the entry collected
+        stored_details = self.stored_processes.get(process_id)
+        
         try:
             process = psutil.Process(process_id)
+
+            if stored_details is not None:
+                stored_create_time = stored_details["create_time"]
+
+                if (stored_create_time is not None and process.create_time() != stored_create_time):
+                    # the PID may now belond to a different process
+                    self.stored_processes.pop(process_id, None)
+                    return False
+
             process.terminate()
+
             try:
                 process.wait(timeout=timeout)
             except psutil.TimeoutExpired: # ignored the polite request, force it
                 process.kill()
                 process.wait(timeout=timeout)
+
             self.stored_processes.pop(process_id, None)
             return True
-        # ZombieProcess is a subclass of NoSuchProcess, so it must be caught first
-        except psutil.ZombieProcess:
-            return False
-        except psutil.NoSuchProcess: # already gone: drop the stale entry
+        
+        # ZombieProcess is a subclass of NoSuchProcess
+        except (psutil.ZombieProcess, psutil.NoSuchProcess):
             self.stored_processes.pop(process_id, None)
             return False
+        
         except (psutil.AccessDenied, psutil.TimeoutExpired):
             return False
 
