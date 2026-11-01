@@ -39,6 +39,7 @@ class Dashboard:
         self.display_disk_frame()
         self.display_bytes_frame()
         self.display_network_frame()
+        self.display_button_frame()
 
         # arrange cards in a row
         # only frames that were created with create_frame() go in the grid 
@@ -48,6 +49,7 @@ class Dashboard:
         self.disk_frame.grid(row=0, column=2, padx=8, pady=8, sticky="nsew")
         self.network_stats_frame.grid(row=1, column=0, padx=8, pady=8, sticky="nsew")
         self.network_speed_frame.grid(row=1, column=1, padx=8, pady=8, sticky="nsew")
+        self.metrics_refresh_button_frame.grid(row=1, column=2, padx=8, pady=8, sticky="nsew")
 
         # allow cards to share available width 
         # uniform makes every column the same width no matter how long its text is 
@@ -56,8 +58,9 @@ class Dashboard:
         for row in range(2): # lets stciky='new' make the cards the same height
             self.metrics_frame.grid_rowconfigure(row, weight=1, uniform="rows") 
 
+    def display_button_frame(self):
         # create metrics refresh button
-        self.metrics_refresh_button_frame = tk.Frame(self.window, bg="#20242c")
+        self.metrics_refresh_button_frame = self.create_frame("BUTTON")
         self.metrics_refresh_button_frame.pack(pady=10)
         self.metrics_refresh_button = tk.Button(self.metrics_refresh_button_frame,
                                                 text="Refresh",
@@ -70,7 +73,7 @@ class Dashboard:
                                                 command=self.update_monitors) # does the updating 
         self.metrics_refresh_button.pack()
        
-        self.metrics_status_label = tk.Label(self.window,
+        self.metrics_status_label = tk.Label(self.metrics_refresh_button_frame,
                                             text="Monitoring System Resources...",
                                             font=("Segoe UI", 9),
                                             bg="#20242c",
@@ -187,6 +190,12 @@ class Dashboard:
                                       fg="white")
         self.download_mbps.pack()
 
+# ------------------------------ process manager ---------------------------------
+    def display_process_frame(self):
+        self.process_frame = self.create_frame("PROCESS")
+        
+
+
 # -----------------------------------------------------------------------------------
 
     def update_monitors(self):
@@ -235,7 +244,7 @@ class Dashboard:
             self.metrics_status_label.config(text="Monitoring System Resources...")
 
         except Exception as error:
-            self.status_label.config(text=f"Monitoring Error: {error}")
+            self.title_label.config(text=f"Monitoring Error: {error}")
 
         finally:
             # schedule another update roughly every 4.5 seconds
