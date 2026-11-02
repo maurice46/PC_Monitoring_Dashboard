@@ -126,12 +126,6 @@ Possible additions include:
 - Historical usage graphs.
 - Configurable alert thresholds through the interface.
 - Automated tests for monitoring and process-management behavior.
-- Screenshots and a demonstration GIF in this README.
-
-## License
-
-No license has been specified yet. Add a license if you want to define how others may use, modify, and distribute this project.
-"""
 
 path = Path("/mnt/data/README.md")
 path.write_text(readme, encoding="utf-8")
