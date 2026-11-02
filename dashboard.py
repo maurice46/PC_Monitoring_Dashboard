@@ -25,8 +25,8 @@ class Dashboard:
         self.window = tk.Tk()
         self.window.title("PC Monitoring Dashboard")
         self.window.geometry("1000x700")
-        self.window.minsize(400, 800)
-        self.window.maxsize(800, 1200)
+        self.window.minsize(700, 700)
+        self.window.maxsize(800, 800)
         self.window.config(bg=self.BG)
         self.window.protocol("WM_DELETE_WINDOW", self.close)
 
@@ -87,15 +87,15 @@ class Dashboard:
         self.display_alert_frame()
     
     def create_frame(self, frame, title):
-        frame = tk.Frame(frame, bg="#303744")
+        frame = tk.Frame(frame, bg=self.CARD_BG)
         tk.Label(frame,
                  text=title,
                  font=("Segoe UI", 12, "bold"),
-                 bg="#303744",
-                 fg='white').pack(pady=(5,3))
+                 bg=self.CARD_BG,
+                 fg=self.FG).pack(pady=(5,3))
         return frame
 
-    def add_metric_label(self, parent, text, font=("Segoe UI", 10), bg="#303744", fg="#ffffff", wraplength=None):
+    def add_metric_label(self, parent, text, font=("Segoe UI", 10), bg=CARD_BG, fg=FG, wraplength=None):
         label = tk.Label(parent, text=text, font=font, bg=bg, fg=fg, anchor="w", wraplength=wraplength)
         label.pack(fill="x", padx=10, pady=2)
         return label
