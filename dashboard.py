@@ -30,7 +30,7 @@ class Dashboard:
         self.window.protocol("WM_DELETE_WINDOW", self.close)
 
         self.create_metric_widgets()
-        # self.display_process_frame()
+        self.display_process_frame()
         # self.display_alert_frame()
         self.update_monitors()
         
@@ -197,7 +197,17 @@ class Dashboard:
             self.metrics_status_label.pack(padx=10, pady=(0,5))
 
     def display_process_frame(self):
-        pass
+        self.process_frame = self.create_frame(self.process_manager_frame, "PROCESS")
+
+        self.processes = self.process_manager.get_running_processes()
+
+        counter = 0
+        for pid, info in self.processes.items():
+            tk.Label(f"Process {pid} | {info['name']} | Status: {info['status']} | Time Created: {info['create_time']}")
+
+            counter += 1
+            if counter > 10:
+                break
 
     def display_alert_frame(self):
         pass
