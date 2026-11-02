@@ -28,11 +28,17 @@ class AlertManager:
         else:
             self.active_alerts.pop('disk', None)
 
-    def check_all(self):
-        # collect the latest system readings 
-        cpu = self.monitor.get_cpu_usage()
-        memory = self.monitor.get_memory_usage()
-        disk = self.monitor.get_disk_usage()
+    def check_all(self, cpu=None, memory=None, disk=None):
+        # use the readings that were passed in so the dashboard doesn't read twice
+        # otherwise collect the latest system readings 
+        if cpu is None:
+            cpu = self.monitor.get_cpu_usage()
+
+        if memory is None:
+            memory = self.monitor.get_memory_usage()
+
+        if disk is None:
+            disk = self.monitor.get_disk_usage()
 
         self.check_cpu(cpu)
         self.check_memory(memory['percent'])
