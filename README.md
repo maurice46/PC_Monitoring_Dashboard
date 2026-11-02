@@ -129,4 +129,4 @@ Possible additions include:
 
 ## Screenshot
 
-![PC Monitoring Dashboard](images/dashboard.png)
+![PC Monitoring Dashboard](dashboard.png)
