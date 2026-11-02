@@ -24,7 +24,7 @@ class Dashboard:
 
         self.window = tk.Tk()
         self.window.title("PC Monitoring Dashboard")
-        self.window.geometry("1000x700")
+        self.window.geometry("800x800")
         self.window.minsize(700, 700)
         self.window.maxsize(800, 800)
         self.window.config(bg=self.BG)
@@ -223,8 +223,8 @@ class Dashboard:
 
         self.alert_text = self.add_metric_label(self.alert_frame, text="")
     
-    def update_alerts(self):
-        alerts = list(self.alert_manager.check_all())[:20]
+    def update_alerts(self, cpu, memory, disk):
+        alerts = list(self.alert_manager.check_all(cpu, memory, disk))[:20]
         text = "\n".join(f"Alert: {a}" for a in alerts) if alerts else "No active alerts"
         self.alert_text.config(text=text, justify="left")   
 
@@ -240,18 +240,18 @@ class Dashboard:
         self.cpu_label.config(text=f'Usage: {self.cpu_usage:.1f}%')
 
         # update memory stuff
-        mem = self.system_monitor.get_memory_usage()
-        self.memory_total.config(text=f"Total: {mem['total']:.2f} GB")
-        self.memory_used.config(text=f"Used: {mem['used']:.2f} GB")
-        self.memory_available.config(text=f"Available: {mem['available']:.2f} GB")
-        self.memory_percent.config(text=f"Usage: {mem['percent']}%")
+        self.mem = self.system_monitor.get_memory_usage()
+        self.memory_total.config(text=f"Total: {self.mem['total']:.2f} GB")
+        self.memory_used.config(text=f"Used: {self.mem['used']:.2f} GB")
+        self.memory_available.config(text=f"Available: {self.mem['available']:.2f} GB")
+        self.memory_percent.config(text=f"Usage: {self.mem['percent']}%")
 
         # update disk stuff
-        disk = self.system_monitor.get_disk_usage()
-        self.disk_total.config(text=f"Total: {disk['total']:.2f} GB")
-        self.disk_used.config(text=f"Used: {disk['used']:.2f} GB")
-        self.disk_free.config(text=f"Free: {disk['free']:.2f} GB")
-        self.disk_percent.config(text=f"Usage: {disk['percent']:.1f}%")
+        self._disk = self.system_monitor.get_disk_usage()
+        self.disk_total.config(text=f"Total: {self._disk['total']:.2f} GB")
+        self.disk_used.config(text=f"Used: {self._disk['used']:.2f} GB")
+        self.disk_free.config(text=f"Free: {self._disk['free']:.2f} GB")
+        self.disk_percent.config(text=f"Usage: {self._disk['percent']:.1f}%")
 
         # update byte stuff
         stats = self.network_monitor.get_network_stats()
@@ -263,7 +263,11 @@ class Dashboard:
         self.upload_mbps.config(text=f"Upload (mbps): {speed['upload_mbps']:.2f}")
         self.download_mbps.config(text=f"Download (mbps): {speed['download_mbps']:.2f}")
 
-        self.update_alerts()
+        # update process stuff 
+        self.update_process_table()
+
+        # update alert stuff
+        self.update_alerts(self.cpu_usage, self.mem, self._disk)
 
         self.update_job = self.window.after(2000, self.update_monitors)
 
