@@ -1,6 +1,4 @@
-from pathlib import Path
-
-readme = """# PC Monitoring Dashboard
+## PC Monitoring Dashboard
 
 A desktop application built with Python and Tkinter to monitor system resource usage, network activity, running processes, and resource alerts.
 
