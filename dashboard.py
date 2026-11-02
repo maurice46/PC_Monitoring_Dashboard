@@ -30,8 +30,8 @@ class Dashboard:
         self.window.protocol("WM_DELETE_WINDOW", self.close)
 
         self.create_metric_widgets()
-        self.display_process_frame()
-        # self.display_alert_frame()
+        self.create_process_widget()
+        self.create_alert_widget()
         self.update_monitors()
         
     def create_metric_widgets(self):
@@ -77,10 +77,13 @@ class Dashboard:
                                       font=("Segoe UI", 18, "bold"),
                                       bg=self.BG,
                                       fg=self.FG)
+        self.process_label.pack(pady=(10,5))
         
         # container for the process manager
         self.process_manager_frame = tk.Frame(self.window, bg=self.BG)
         self.process_manager_frame.pack(fill="x", padx=10, pady=5)
+
+        self.display_process_frame()
 
     def create_alert_widget(self):
         self.alert_label = tk.Label(self.window,
@@ -88,10 +91,13 @@ class Dashboard:
                                     font=("Segoe UI", 18, "bold"),
                                     bg=self.BG,
                                     fg=self.FG)
+        self.alert_label.pack(pady=(10,5))
     
         # container for the alert manager 
         self.alert_manager_frame = tk.Frame(self.window, bg=self.BG)
         self.alert_manager_frame.pack(fill="x", padx=10, pady=5)
+
+        self.display_alert_frame()
     
     def create_frame(self, frame, title):
         frame = tk.Frame(frame, bg="#303744")
@@ -102,8 +108,8 @@ class Dashboard:
                  fg='white').pack(pady=(5,3))
         return frame
 
-    def add_metric_label(self, parent, text, font=("Segoe UI", 10), bg="#303744", fg="#ffffff"):
-        label = tk.Label(parent, text=text, font=font, bg=bg, fg=fg, anchor="w")
+    def add_metric_label(self, parent, text, font=("Segoe UI", 10), bg="#303744", fg="#ffffff", wraplength=None):
+        label = tk.Label(parent, text=text, font=font, bg=bg, fg=fg, anchor="w", wraplength=wraplength)
         label.pack(fill="x", padx=10, pady=2)
         return label
 
@@ -188,30 +194,54 @@ class Dashboard:
                                                     cursor="hand2")  
             self.metrics_refresh_button.pack(padx=10, pady=(5,4))
            
-            self.metrics_status_label = tk.Label(self.metrics_refresh_button_frame,
+            self.metrics_status_label = self.add_metric_label(self.metrics_refresh_button_frame,
                                                 text="Monitoring System Resources...",
-                                                font=("Segoe UI", 9),
-                                                bg="#20242c",
-                                                fg='#9ca3af',
                                                 wraplength=180)
             self.metrics_status_label.pack(padx=10, pady=(0,5))
 
     def display_process_frame(self):
-        self.process_frame = self.create_frame(self.process_manager_frame, "PROCESS")
+        self.process_frame = self.create_frame(self.process_manager_frame, "TOP PROCESS")
+        self.process_frame.pack(fill="x")
 
-        self.processes = self.process_manager.get_running_processes()
+        columns = (("pid", "PID", 70), ("name", "Name", 250), ("cpu", "CPU %", 80),
+               ("memory", "Memory (MB)", 110), ("status", "Status", 100))
+        
+        self.process_tree = ttk.Treeview(self.process_frame,
+                                         columns=[c[0] for c in columns],
+                                         show="headings", 
+                                         height=6)
+        
+        for key, heading, width in columns:
+            self.process_tree.heading(key, text=heading)
+            self.process_tree.column(key, width=width, anchor="w")
 
-        counter = 0
-        for pid, info in self.processes.items():
-            tk.Label(f"Process {pid} | {info['name']} | Status: {info['status']} | Time Created: {info['create_time']}")
+        self.process_tree.pack(fill="x", padx=10, pady=(0, 10))
 
-            counter += 1
-            if counter > 10:
-                break
+        self.update_process_table()
+
+    def update_process_table(self):
+        processes = self.process_manager.get_running_processes()
+        top = sorted(processes.values(), key=lambda p: p["memory_rss"], reverse=True)[:6]
+
+        self.process_tree.delete(*self.process_tree.get_children())
+
+        for p in top:
+            self.process_tree.insert("", "end", values=(
+                p["pid"], p["name"], p["cpu_percent"], p["memory_mb"], p["status"]
+        ))
 
     def display_alert_frame(self):
-        pass
+        self.alert_frame = self.create_frame(self.alert_manager_frame, "ALERT")
+        self.alert_frame.pack(fill="x")
 
+        self.alert_text = self.add_metric_label(self.alert_frame, text="")
+
+        self.update_alerts()
+    
+    def update_alerts(self):
+        alerts = list(self.alert_manager.check_all())[:20]
+        text = "\n".join(f"Alert: {a}" for a in alerts) if alerts else "No active alerts"
+        self.alert_text.config(text=text, justify="left")   
 
  
 # ------------------------------ updating stuff --------------------------
