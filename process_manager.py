@@ -89,8 +89,19 @@ class ProcessManager:
             process_id = int(process_id)
         except (TypeError, ValueError):
             return None
+
+        details = self.stored_processes.get(process_id)
+
+        if details is None:
+            return None
+
+        try:
+            proc = psutil.Process(process_id)
+            details = {**details, "useranme": proc.username(), "exe":proc.exe() or "Unavailable"}
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
         
-        return self.stored_processes.get(process_id)
+        return details
     
     def terminate_process(self, process_id, timeout=3):
         try:

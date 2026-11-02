@@ -73,7 +73,7 @@ class Dashboard:
         # uniform makes every column the same width no matter how long its text is 
         for col in range(3): # 3 columns 
             self.metrics_frame.grid_columnconfigure(col, weight=1, uniform="cards")
-        for row in range(3): # lets stciky='new' make the cards the same height
+        for row in range(2): # lets stciky='new' make the cards the same height
             self.metrics_frame.grid_rowconfigure(row, weight=1, uniform="rows") 
     
     def create_frame(self, title):
@@ -85,12 +85,18 @@ class Dashboard:
                  fg='white').pack(pady=(5,3))
         return frame
 
-    def add_metric_label(self, parent, text, font=("Segoe UI", 10), bg="#20242c", fg="#ffffff"):
-        label = tk.Label(parent, text, font, bg, fg, anchor="w")
+    def add_metric_label(self, parent, text, font=("Segoe UI", 10), bg="#303744", fg="#ffffff"):
+        label = tk.Label(parent, text=text, font=font, bg=bg, fg=fg, anchor="w")
         label.pack(fill="x", padx=10, pady=2)
         return label
 
-# ------------------------------ metric cards ---------------------------------
+    def close(self):
+        if self.update_job is not None:
+            self.window.after_cancel(self.update_job)
+            self.update_job = None
+        self.window.destroy()
+
+# ------------------------------ display metric cards ---------------------------------
 
     def display_cpu_frame(self): 
         self.cpu_frame = self.create_frame("CPU")
@@ -112,7 +118,7 @@ class Dashboard:
 
         self.memory_percent = self.add_metric_label(parent=self.memory_frame,
                                                     text=f"Usage: {self.memory_usage['percent']}%")
-        
+
     def display_disk_frame(self):
         self.disk_frame = self.create_frame("DISK")
         self.disk_usage = self.system_monitor.get_disk_usage()
@@ -151,9 +157,8 @@ class Dashboard:
                                                    text=f"Download (mbps): {self.network_speed_stats['download_mbps']:.2f}")
 
     def display_button_frame(self):
-            # create metrics refresh button
-            self.metrics_refresh_button_frame = self.create_frame("BUTTON")
-            self.metrics_refresh_button_frame.pack(pady=10)
+            self.metrics_refresh_button_frame = self.create_frame("MONITORING")
+
             self.metrics_refresh_button = tk.Button(self.metrics_refresh_button_frame,
                                                     text="Refresh",
                                                     font=("Segoe UI", 10, "bold"),
@@ -162,87 +167,66 @@ class Dashboard:
                                                     activebackground="#2563eb",
                                                     activeforeground="white",
                                                     relief="flat",
-                                                    command=self.update_monitors) # does the updating 
-            self.metrics_refresh_button.pack()
+                                                    command=self.update_monitors,
+                                                    cursor="hand2")  
+            self.metrics_refresh_button.pack(padx=10, pady=(5,4))
            
             self.metrics_status_label = tk.Label(self.metrics_refresh_button_frame,
                                                 text="Monitoring System Resources...",
                                                 font=("Segoe UI", 9),
                                                 bg="#20242c",
-                                                fg='#9ca3af')
-            self.metrics_status_label.pack()
+                                                fg='#9ca3af',
+                                                wraplength=180)
+            self.metrics_status_label.pack(padx=10, pady=(0,5))
 
-# ------------------------------ process manager ---------------------------------
     def display_process_frame(self):
-        self.process_frame = self.create_frame("PROCESS")
+        pass
 
-        self.process_information = self.process_manager.get_running_processes()
-
-        for pid, process in self.process_information.items():
-            tk.Label(self.process_frame,
-                     text=f"Process {process['pid']}: {process['name']} | \
-                     Memory Usage (%): {process['memory_percent']} | Status: \
-                     {process['status']} | Created At: {process['create_time']}").pack()
+    def display_alert_frame  (self):
+        pass
 
 
-# -----------------------------------------------------------------------------------
+ 
+# ------------------------------ updating stuff --------------------------
 
     def update_monitors(self):
-        # cancel the timer that is already waiting, so clicking Refresh restarts the 4.5s
-        # countdown instead of starting a second, overlapping update loop
         if self.update_job is not None:
             self.window.after_cancel(self.update_job)
-            self.update_job = None
 
-        try:
-            # system monitoring stuff 
-            self.cpu_usage = self.system_monitor.get_cpu_usage(interval=None)
-            self.memory_usage = self.system_monitor.get_memory_usage()
-            self.disk_usage = self.system_monitor.get_disk_usage()
+        # update cpu stuff 
+        self.cpu_usage = self.system_monitor.get_cpu_usage()
+        self.cpu_label.config(text=f'Usage: {self.cpu_usage:.1f}%')
 
-            # update CPU
-            self.cpu_label.config(text=f'Usage: {self.cpu_usage:.1f}%')
+        # update memory stuff
+        mem = self.system_monitor.get_memory_usage()
+        self.memory_total.config(text=f"Total: {mem['total']:.2f} GB")
+        self.memory_used.config(text=f"Used: {mem['used']:.2f} GB")
+        self.memory_available.config(text=f"Available: {mem['available']:.2f} GB")
+        self.memory_percent.config(text=f"Usage: {mem['percent']}%")
 
-            # update memory
-            self.memory_used.config(text=f"Used: {self.memory_usage['used']:.1f} GB")
-            self.memory_available.config(text=f"Available: {self.memory_usage['available']:.1f} GB")
-            self.memory_percent.config(text=f"Usage: {self.memory_usage['percent']:.1f}%")
+        # update disk stuff
+        disk = self.system_monitor.get_disk_usage()
+        self.disk_total.config(text=f"Total: {disk['total']:.2f} GB")
+        self.disk_used.config(text=f"Used: {disk['used']:.2f} GB")
+        self.disk_free.config(text=f"Free: {disk['free']:.2f} GB")
+        self.disk_percent.config(text=f"Usage: {disk['percent']:.1f}%")
 
-            # update disk
-            self.disk_used.config(text=f"Used: {self.disk_usage['used']:.1f} GB")
-            self.disk_free.config(text=f"Free: {self.disk_usage['free']:.1f} GB")
-            self.disk_percent.config(text=f"Usage: {self.disk_usage['percent']:.1f}%")
+        # update byte stuff
+        stats = self.network_monitor.get_network_stats()
+        self.network_bytes_received.config(text=f"Bytes Received: {stats['bytes_received'] / 1024 ** 3:.2f} GB")
+        self.network_bytes_sent.config(text=f"Bytes Sent: {stats['bytes_sent'] / 1024 ** 3:.2f} GB")
 
-            # network monitoring stuff
-            self.network_stats = self.network_monitor.get_network_stats()
-            self.network_speed_stats = self.network_monitor.get_network_speed()
+        # update network stuff
+        speed = self.network_monitor.get_network_speed()
+        self.upload_mbps.config(text=f"Upload (mbps): {speed['upload_mbps']:.2f}")
+        self.download_mbps.config(text=f"Download (mbps): {speed['download_mbps']:.2f}")
 
-            # update bytes received
-            self.network_bytes_received.config(text=f"Bytes Received: {self.network_stats['bytes_received'] / 1024 ** 3:.2f} GB")
-
-            # update bytes sent 
-            self.network_bytes_sent.config(text=f"Bytes Sent: {self.network_stats['bytes_sent'] / 1024 ** 3:.2f} GB")
-
-            # update upload speed
-            self.upload_mbps.config(text=f"Upload (mbps): {self.network_speed_stats['upload_mbps']:.2f}")
-
-            # update download speed
-            self.download_mbps.config(text=f"Download (mbps): {self.network_speed_stats['download_mbps']:.2f}")
-
-            # clear any earlier error message
-            self.metrics_status_label.config(text="Monitoring System Resources...")
-
-        except Exception as error:
-            self.title_label.config(text=f"Monitoring Error: {error}")
-
-        finally:
-            # schedule another update roughly every 4.5 seconds
-            self.window.after(4500, self.update_monitors)
+        self.update_job = self.window.after(2000, self.update_monitors)
 
     def run(self):
         self.window.mainloop()
 
-dashboard = Dashboard()
-dashboard.run()
+a = Dashboard()
+a.run()
 
 
