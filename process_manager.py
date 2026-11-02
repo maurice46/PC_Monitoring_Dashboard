@@ -12,6 +12,11 @@ class ProcessManager:
         self.mb = 1024 ** 2
         self.cpu_count = psutil.cpu_count() or 1
 
+        # the first cpu_percent reading for a process is always 0.0 (nothing to compare against)
+        # so take one throwaway reading now, the first real refresh will then have a baseline
+        for process in psutil.process_iter(['cpu_percent']):
+            pass
+
     def get_running_processes(self): # get process information (attributes)
         processes = {}
         attributes = ['pid', 'name', 'cpu_percent', 'memory_info', 'memory_percent', 'status', 'username', 'create_time', 'exe']
