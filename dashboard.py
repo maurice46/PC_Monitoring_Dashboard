@@ -25,7 +25,7 @@ class Dashboard:
         self.window = tk.Tk()
         self.window.title("PC Monitoring Dashboard")
         self.window.geometry("1000x700")
-        self.window.minsize(400, 600)
+        self.window.minsize(400, 800)
         self.window.maxsize(800, 1200)
         self.window.config(bg=self.BG)
         self.window.protocol("WM_DELETE_WINDOW", self.close)
@@ -73,13 +73,6 @@ class Dashboard:
             self.metrics_frame.grid_rowconfigure(row, weight=1, uniform="rows") 
 
     def create_process_widget(self):
-        self.process_label = tk.Label(self.window,
-                                      text="Processes", 
-                                      font=("Segoe UI", 18, "bold"),
-                                      bg=self.BG,
-                                      fg=self.FG)
-        self.process_label.pack(pady=(10,5))
-        
         # container for the process manager
         self.process_manager_frame = tk.Frame(self.window, bg=self.BG)
         self.process_manager_frame.pack(fill="x", padx=10, pady=5)
@@ -87,13 +80,6 @@ class Dashboard:
         self.display_process_frame()
 
     def create_alert_widget(self):
-        self.alert_label = tk.Label(self.window,
-                                    text="Alerts", 
-                                    font=("Segoe UI", 18, "bold"),
-                                    bg=self.BG,
-                                    fg=self.FG)
-        self.alert_label.pack(pady=(10,5))
-    
         # container for the alert manager 
         self.alert_manager_frame = tk.Frame(self.window, bg=self.BG)
         self.alert_manager_frame.pack(fill="x", padx=10, pady=5)
@@ -201,7 +187,7 @@ class Dashboard:
             self.metrics_status_label.pack(padx=10, pady=(0,5))
 
     def display_process_frame(self):
-        self.process_frame = self.create_frame(self.process_manager_frame, "TOP PROCESS")
+        self.process_frame = self.create_frame(self.process_manager_frame, "PROCESSES")
         self.process_frame.pack(fill="x")
 
         columns = (("pid", "PID", 70), ("name", "Name", 250), ("cpu", "CPU %", 80),
@@ -232,12 +218,10 @@ class Dashboard:
         ))
 
     def display_alert_frame(self):
-        self.alert_frame = self.create_frame(self.alert_manager_frame, "ALERT")
+        self.alert_frame = self.create_frame(self.alert_manager_frame, "ALERTS")
         self.alert_frame.pack(fill="x")
 
         self.alert_text = self.add_metric_label(self.alert_frame, text="")
-
-        self.update_alerts()
     
     def update_alerts(self):
         alerts = list(self.alert_manager.check_all())[:20]
@@ -278,6 +262,8 @@ class Dashboard:
         speed = self.network_monitor.get_network_speed()
         self.upload_mbps.config(text=f"Upload (mbps): {speed['upload_mbps']:.2f}")
         self.download_mbps.config(text=f"Download (mbps): {speed['download_mbps']:.2f}")
+
+        self.update_alerts()
 
         self.update_job = self.window.after(2000, self.update_monitors)
 
