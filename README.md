@@ -127,6 +127,6 @@ Possible additions include:
 - Configurable alert thresholds through the interface.
 - Automated tests for monitoring and process-management behavior.
 
-path = Path("/mnt/data/README.md")
-path.write_text(readme, encoding="utf-8")
-print(f"Created: {path}")
+## Screenshot
+
+![PC Monitoring Dashboard](images/dashboard.png)
