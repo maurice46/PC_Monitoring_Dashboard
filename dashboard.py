@@ -25,7 +25,8 @@ class Dashboard:
         self.window = tk.Tk()
         self.window.title("PC Monitoring Dashboard")
         self.window.geometry("1000x700")
-        self.window.minsize(850, 600)
+        self.window.minsize(400, 600)
+        self.window.maxsize(800, 1200)
         self.window.config(bg=self.BG)
         self.window.protocol("WM_DELETE_WINDOW", self.close)
 
@@ -33,7 +34,7 @@ class Dashboard:
         self.create_process_widget()
         self.create_alert_widget()
         self.update_monitors()
-        
+
     def create_metric_widgets(self):
         self.title_label = tk.Label(self.window, 
                                     text="Monitoring Dashboard", 
@@ -282,8 +283,4 @@ class Dashboard:
 
     def run(self):
         self.window.mainloop()
-
-a = Dashboard()
-a.run()
-
 
