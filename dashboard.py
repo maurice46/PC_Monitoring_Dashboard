@@ -17,12 +17,10 @@ class Dashboard:
         self.system_monitor = SystemMonitor()
         self.network_monitor = NetworkMonitor()
         self.process_manager = ProcessManager()
-        # self.alert_manager = AlertManager(monitor=self.system_monitor)
+        self.alert_manager = AlertManager(monitor=self.system_monitor)
 
         # id of the pending window.after() call (so Refresh can't stack timers)
         self.update_job = None
-        self.sort_column = "cpu_percent"
-        self.sort_reverse = True
 
         self.window = tk.Tk()
         self.window.title("PC Monitoring Dashboard")
@@ -31,12 +29,9 @@ class Dashboard:
         self.window.config(bg=self.BG)
         self.window.protocol("WM_DELETE_WINDOW", self.close)
 
-        # variables connected to the process manager controls
-        self.search_var = tk.StringVar()
-        self.sort_var = tk.StringVar(value="CPU")
-
         self.create_metric_widgets()
-        self.display_process_frame()
+        # self.display_process_frame()
+        # self.display_alert_frame()
         self.update_monitors()
         
     def create_metric_widgets(self):
@@ -47,10 +42,10 @@ class Dashboard:
                                     fg=self.FG)
         self.title_label.pack(pady=(10,5))
 
-        # container for the metric sections
+        # container for the metrics cards
         self.metrics_frame = tk.Frame(self.window, bg=self.BG)
-        self.metrics_frame.pack(fill='x', padx=10, pady=5)
-
+        self.metrics_frame.pack(fill="x", padx=10, pady=5)
+        
         # create metric cards 
         self.display_cpu_frame()
         self.display_memory_frame()
@@ -75,9 +70,31 @@ class Dashboard:
             self.metrics_frame.grid_columnconfigure(col, weight=1, uniform="cards")
         for row in range(2): # lets stciky='new' make the cards the same height
             self.metrics_frame.grid_rowconfigure(row, weight=1, uniform="rows") 
+
+    def create_process_widget(self):
+        self.process_label = tk.Label(self.window,
+                                      text="Processes", 
+                                      font=("Segoe UI", 18, "bold"),
+                                      bg=self.BG,
+                                      fg=self.FG)
+        
+        # container for the process manager
+        self.process_manager_frame = tk.Frame(self.window, bg=self.BG)
+        self.process_manager_frame.pack(fill="x", padx=10, pady=5)
+
+    def create_alert_widget(self):
+        self.alert_label = tk.Label(self.window,
+                                    text="Alerts", 
+                                    font=("Segoe UI", 18, "bold"),
+                                    bg=self.BG,
+                                    fg=self.FG)
     
-    def create_frame(self, title):
-        frame = tk.Frame(self.metrics_frame, bg="#303744")
+        # container for the alert manager 
+        self.alert_manager_frame = tk.Frame(self.window, bg=self.BG)
+        self.alert_manager_frame.pack(fill="x", padx=10, pady=5)
+    
+    def create_frame(self, frame, title):
+        frame = tk.Frame(frame, bg="#303744")
         tk.Label(frame,
                  text=title,
                  font=("Segoe UI", 12, "bold"),
@@ -99,13 +116,13 @@ class Dashboard:
 # ------------------------------ display metric cards ---------------------------------
 
     def display_cpu_frame(self): 
-        self.cpu_frame = self.create_frame("CPU")
+        self.cpu_frame = self.create_frame(self.metrics_frame, "CPU")
         self.cpu_usage = self.system_monitor.get_cpu_usage()
         self.cpu_label = self.add_metric_label(parent=self.cpu_frame, 
                                                text=f"Usage: {self.cpu_usage}%")
 
     def display_memory_frame(self):
-        self.memory_frame = self.create_frame("MEMORY")
+        self.memory_frame = self.create_frame(self.metrics_frame, "MEMORY")
         self.memory_usage = self.system_monitor.get_memory_usage()
         self.memory_total = self.add_metric_label(parent=self.memory_frame, 
                                                   text=f"Total: {self.memory_usage['total']:.2f} GB")
@@ -120,7 +137,7 @@ class Dashboard:
                                                     text=f"Usage: {self.memory_usage['percent']}%")
 
     def display_disk_frame(self):
-        self.disk_frame = self.create_frame("DISK")
+        self.disk_frame = self.create_frame(self.metrics_frame, "DISK")
         self.disk_usage = self.system_monitor.get_disk_usage()
 
         self.disk_total = self.add_metric_label(parent=self.disk_frame, 
@@ -136,7 +153,7 @@ class Dashboard:
                                                   text=f"Usage: {self.disk_usage['percent']:.1f}%")
 
     def display_bytes_frame(self):
-        self.network_stats_frame = self.create_frame("BYTES")
+        self.network_stats_frame = self.create_frame(self.metrics_frame, "BYTES")
         self.network_stats = self.network_monitor.get_network_stats()
 
         self.network_bytes_received = self.add_metric_label(parent=self.network_stats_frame,
@@ -147,7 +164,7 @@ class Dashboard:
                                                         text=f"Bytes Sent: {self.network_stats['bytes_sent'] / 1024 ** 3:.2f} GB")
 
     def display_network_frame(self):
-        self.network_speed_frame = self.create_frame("SPEED")
+        self.network_speed_frame = self.create_frame(self.metrics_frame, "SPEED")
         self.network_speed_stats = self.network_monitor.get_network_speed()
 
         self.upload_mbps = self.add_metric_label(parent=self.network_speed_frame,
@@ -157,7 +174,7 @@ class Dashboard:
                                                    text=f"Download (mbps): {self.network_speed_stats['download_mbps']:.2f}")
 
     def display_button_frame(self):
-            self.metrics_refresh_button_frame = self.create_frame("MONITORING")
+            self.metrics_refresh_button_frame = self.create_frame(self.metrics_frame, "MONITORING")
 
             self.metrics_refresh_button = tk.Button(self.metrics_refresh_button_frame,
                                                     text="Refresh",
@@ -182,7 +199,7 @@ class Dashboard:
     def display_process_frame(self):
         pass
 
-    def display_alert_frame  (self):
+    def display_alert_frame(self):
         pass
 
 
