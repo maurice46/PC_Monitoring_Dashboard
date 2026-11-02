@@ -12,7 +12,9 @@ class SystemMonitor:
         # initialize CPU measurement 
         psutil.cpu_percent(interval=None) 
 
-    def get_cpu_usage(self, interval=1):
+    def get_cpu_usage(self, interval=None):
+        # interval=None doesn't block: it compares against the previous call
+        # a blocking interval would freeze the tk window while it waits 
         return psutil.cpu_percent(interval=interval) 
 
     def get_memory_usage(self):
