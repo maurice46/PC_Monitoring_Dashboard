@@ -113,14 +113,13 @@ The application is organized into separate classes so each component has a focus
 
 - Network speeds are estimates calculated from changes in cumulative network counters over time.
 - Process information may be unavailable for some processes because of operating-system permissions or because a process exits while being inspected.
-- Terminating processes can cause applications to lose unsaved work. Use process termination carefully.
-- The dashboard currently displays a limited selection of processes rather than every process in the table.
-- The application is intended as a local monitoring and learning project, not a replacement for a full system administration or observability platform.
+- Terminating processes can cause applications to lose important information. Still thinking about implementing this one.
+- The dashboard doesn't display all the processes.
+- The application is intended as a local monitoring and learning project, NOT a replacement for a full system administration or observability platform.
 
 ## Future Improvements
 
 Possible additions include:
-
 - Process-table searching and sorting in the graphical interface.
 - A confirmation dialog before terminating a process.
 - Historical usage graphs.
