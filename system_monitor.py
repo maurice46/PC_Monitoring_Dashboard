@@ -1,6 +1,5 @@
-"""
-collect system resource usage statistics: CPU, Memory, Disk
-"""
+"""collect system resource usage statistics: CPU, Memory, Disk"""
+
 import psutil
 import os
 

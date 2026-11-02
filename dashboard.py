@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk
 
 from system_monitor import SystemMonitor
 from network_monitor import NetworkMonitor

@@ -1,4 +1,4 @@
-"""Collect network statistics."""
+"""collect network statistics"""
 
 import psutil
 import time

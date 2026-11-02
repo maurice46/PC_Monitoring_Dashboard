@@ -1,3 +1,5 @@
+"""get alerts for the cpu, memory and disk"""
+
 from system_monitor import SystemMonitor
 
 class AlertManager:
